@@ -1,23 +1,27 @@
-import { Models } from 'appwrite'
+import { Models } from 'appwrite';
 import Loader from './Loader';
-import GridPostList from './GridPostList'
+import GridPostList from './GridPostList';
 
 type SearchResultsProps = {
   isSearchFetching: boolean;
-  searchedPosts: Models.Documnet[];
+  searchedPosts: Models.Document[] | undefined; // Allow searchedPosts to be undefined
 }
 
 const SearchResults = ({ isSearchFetching, searchedPosts }: SearchResultsProps) => {
-  if(isSearchFetching) return <Loader />
+  if (isSearchFetching) return <Loader />;
 
-  if(searchedPosts && searchedPosts.documents.length > 0) {
-    return (
-      <GridPostList posts={searchedPosts.documents} />
-    )
+  // Check if searchedPosts is undefined or null
+  if (!searchedPosts) {
+    return <p className="text-light-4 mt-10 text-center w-full">No results found</p>;
   }
-  return (
-    <p className="text-light-4 mt-10 text-center w-full">No results found</p>
-  )
+
+  if (searchedPosts.length > 0) { // Now it's safe to access length property
+    return (
+      <GridPostList posts={searchedPosts} />
+    );
+  }
+  
+  return <p className="text-light-4 mt-10 text-center w-full">No results found</p>;
 }
 
-export default SearchResults
+export default SearchResults;
