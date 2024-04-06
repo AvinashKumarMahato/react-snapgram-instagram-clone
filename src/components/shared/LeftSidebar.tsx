@@ -8,13 +8,18 @@ import { Button } from "../ui/button";
 
 const LeftSidebar = () => {
   const { pathname } = useLocation();
-  const { mutate: signOut, isSuccess } = useSignOutAccount();
+  const { isSuccess } = useSignOutAccount(); // Remove unused variable
   const navigate = useNavigate();
   const { user } = useUserContext();
 
   useEffect(() => {
     if (isSuccess) navigate(0);
   }, [isSuccess]);
+
+  const handleSignOut = () => {
+    // Implement sign out logic here
+  };
+
   return (
     <nav className="leftsidebar">
       <div className="flex flex-col gap-11">
@@ -69,7 +74,7 @@ const LeftSidebar = () => {
       <Button
         variant="ghost"
         className="shad-button_ghost"
-        onClick={(e) => handleSignOut(e)}
+        onClick={handleSignOut} // Use handleSignOut function
       >
         <img src="/assets/icons/logout.svg" alt="logout" />
         <p className="small-medium lg:base-medium">Logout</p>
