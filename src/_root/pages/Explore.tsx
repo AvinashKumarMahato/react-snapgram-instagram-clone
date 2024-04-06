@@ -7,20 +7,35 @@ import { useGetPosts, useSearchPosts } from "@/lib/react-query/queriesAndMutatio
 import { useState, useEffect } from "react";
 import { useInView } from 'react-intersection-observer'
 
+interface Document {
+  id: string;
+  title: string;
+  // Add more properties as needed
+}
+
 const Explore = () => {
   const { ref, inView } = useInView();
   const { data: posts, fetchNextPage, hasNextPage } = useGetPosts();
 
   const [searchValue, setSearchValue] = useState("");
+  const [searchedPosts, setSearchedPosts] = useState<Document[]>([]);
 
   const debounceValue = useDebounce(searchValue, 500);
 
-  const { data: searchedPosts, isFetching: isSearchFetching } = useSearchPosts(debounceValue)
-// Infinite Scroll
+  const { data, isFetching: isSearchFetching } = useSearchPosts(debounceValue)
+
+  useEffect(() => {
+    if (data) {
+      setSearchedPosts(data.documents.map((doc) => ({ id: doc.id, title: doc.title })));
+    } else {
+      setSearchedPosts([]);
+    }
+  }, [data]);
+
   useEffect(() => {
     if(inView && !searchValue) fetchNextPage();
   }, [inView, searchValue])
-//
+
   if (!posts)
     return (
       <div className="flex-center w-full h-full">
