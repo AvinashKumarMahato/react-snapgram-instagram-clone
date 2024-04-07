@@ -139,10 +139,10 @@ export const useGetPostById = (postId?: string) => {
   return useQuery({
     queryKey: [QUERY_KEYS.GET_POST_BY_ID, postId],
     queryFn: async () => {
-      // Ensure that getPostById returns a value and not undefined
+      if (!postId) throw new Error("postId is required");
       const post = await getPostById(postId);
       if (!post) {
-        throw new Error("Post not found"); // Or return some default value/error handling
+        throw new Error("Post not found");
       }
       return post;
     },
@@ -156,18 +156,21 @@ export const useUpdatePost = () => {
   return useMutation({
     mutationFn: (post: IUpdatePost) => updatePost(post),
     onSuccess: (data) => {
+      if (!data || !data.$id) throw new Error("Invalid data");
       queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.GET_POST_BY_ID, data?.$id],
+        queryKey: [QUERY_KEYS.GET_POST_BY_ID, data.$id],
       });
     },
-  })
-}
+  });
+};
 
 export const useDeletePost = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ postId, imageId }: { postId?: string; imageId: string }) =>
-      deletePost(postId, imageId),
+    mutationFn: async ({ postId, imageId }: { postId?: string; imageId: string }) => {
+      if (!postId) throw new Error("postId is required");
+      await deletePost(postId, imageId);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [QUERY_KEYS.GET_RECENT_POSTS],
@@ -175,6 +178,8 @@ export const useDeletePost = () => {
     },
   });
 };
+
+
 export const useGetPosts = () => {
   return useInfiniteQuery({
     queryKey: [QUERY_KEYS.GET_INFINITE_POSTS],
@@ -189,8 +194,10 @@ export const useGetPosts = () => {
       const lastId = lastPage.documents[lastPage.documents.length - 1].$id;
       return lastId;
     },
+    initialPageParam: undefined, // Add initialPageParam property
   });
 };
+
 
 export const useSearchPosts = (searchTerm: string) => {
   return useQuery({
@@ -220,11 +227,12 @@ export const useUpdateUser = () => {
   return useMutation({
     mutationFn: (user: IUpdateUser) => updateUser(user),
     onSuccess: (data) => {
+      if (!data || !data.$id) throw new Error("Invalid data");
       queryClient.invalidateQueries({
         queryKey: [QUERY_KEYS.GET_CURRENT_USER],
       });
       queryClient.invalidateQueries({
-        queryKey: [QUERY_KEYS.GET_USER_BY_ID, data?.$id],
+        queryKey: [QUERY_KEYS.GET_USER_BY_ID, data.$id],
       });
     },
   });
