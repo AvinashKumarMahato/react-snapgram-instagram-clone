@@ -1,40 +1,41 @@
 import GridPostList from "@/components/shared/GridPostList";
 import Loader from "@/components/shared/Loader";
-import SearchResults from "@/components/shared/SearchResults";
 import { Input } from "@/components/ui/input";
 import useDebounce from "@/hooks/useDebounce";
 import { useGetPosts, useSearchPosts } from "@/lib/react-query/queriesAndMutations";
 import { useState, useEffect } from "react";
-import { useInView } from 'react-intersection-observer'
+import { useInView } from 'react-intersection-observer';
 
-interface Document {
-  id: string;
-  title: string;
-  // Add more properties as needed
-}
+export type SearchResultProps = {
+  isSearchFetching: boolean;
+  searchedPosts: any;
+};
+
+const SearchResultsComponent = ({ isSearchFetching, searchedPosts }: SearchResultProps) => {
+  if (isSearchFetching) {
+    return <Loader />;
+  } else if (searchedPosts && searchedPosts.documents.length > 0) {
+    return <GridPostList posts={searchedPosts.documents} />;
+  } else {
+    return (
+      <p className="text-light-4 mt-10 text-center w-full">No results found</p>
+    );
+  }
+};
 
 const Explore = () => {
   const { ref, inView } = useInView();
   const { data: posts, fetchNextPage, hasNextPage } = useGetPosts();
 
   const [searchValue, setSearchValue] = useState("");
-  const [searchedPosts, setSearchedPosts] = useState<Document[]>([]);
-
-  const debounceValue = useDebounce(searchValue, 500);
-
-  const { data, isFetching: isSearchFetching } = useSearchPosts(debounceValue)
+  const debouncedSearch = useDebounce(searchValue, 500);
+  const { data: searchedPosts, isFetching: isSearchFetching } = useSearchPosts(debouncedSearch);
 
   useEffect(() => {
-    if (data) {
-      setSearchedPosts(data.documents.map((doc) => ({ id: doc.id, title: doc.title })));
-    } else {
-      setSearchedPosts([]);
+    if (inView && !searchValue) {
+      fetchNextPage();
     }
-  }, [data]);
-
-  useEffect(() => {
-    if(inView && !searchValue) fetchNextPage();
-  }, [inView, searchValue])
+  }, [inView, searchValue]);
 
   if (!posts)
     return (
@@ -46,6 +47,7 @@ const Explore = () => {
   const shouldShowSearchResults = searchValue !== "";
   const shouldShowPosts = !shouldShowSearchResults && 
     posts.pages.every((item) => item.documents.length === 0);
+
   return (
     <div className="explore-container">
       <div className="explore-inner_container">
@@ -69,6 +71,7 @@ const Explore = () => {
           />
         </div>
       </div>
+
       <div className="flex-between w-full max-w-5xl mt-16 mb-7">
         <h3 className="body-bold md:h3-bold">Popular Today</h3>
 
@@ -82,9 +85,10 @@ const Explore = () => {
           />
         </div>
       </div>
+
       <div className="flex flex-wrap gap-9 w-full max-w-5xl">
         {shouldShowSearchResults ? (
-          <SearchResults
+          <SearchResultsComponent
             isSearchFetching={isSearchFetching}
             searchedPosts={searchedPosts}
           />
@@ -96,6 +100,7 @@ const Explore = () => {
           ))
         )}
       </div>
+
       {hasNextPage && !searchValue && (
         <div ref={ref} className="mt-10">
           <Loader />
